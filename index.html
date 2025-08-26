@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Workspace</title>
+
+<!-- Chart.js (gráfico pizza) -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+:root{
+  --bg:#0f1216;
+  --panel:#141923;
+  --panel-2:#0f151d;
+  --stroke:#222935;
+  --text:#e8edf4;
+  --muted:#a8b2c1;
+  --accent:#86b0ff;
+  --accent-2:#6ee7c6;
+  --danger:#ff6b6b;
+  --warn:#f7c948;
+  --ok:#55d88a;
+  --neutral:#a0a7b4;
+  --radius:14px;
+  --shadow:0 14px 36px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:
+    radial-gradient(1200px 600px at 18% -10%, #1b2332 0%, transparent 60%),
+    radial-gradient(900px 520px at 88% -20%, #171f2b 0%, transparent 60%),
+    var(--bg);
+  color:var(--text); font:14px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial;
+}
+
+/* Header */
+header{position:sticky; top:0; z-index:30; background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)), var(--panel); border-bottom:1px solid var(--stroke); box-shadow:var(--shadow);}
+.header-inner{max-width:1280px;margin:0 auto;padding:14px 18px; display:flex; align-items:center; gap:16px; justify-content:space-between;}
+h1{font-size:18px;margin:0; letter-spacing:.3px}
+.header-actions{display:flex; gap:10px; align-items:center}
+.btn{
+  appearance:none; border:1px solid var(--stroke);
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+  color:var(--text); padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; letter-spacing:.2px;
+}
+.btn:hover{box-shadow:0 10px 26px rgba(0,0,0,.3); transform:translateY(-1px)}
+.btn.primary{border-color:#4362ff; background:linear-gradient(180deg, rgba(67,98,255,.25), rgba(67,98,255,.12));}
+
+/* Layout */
+.container{max-width:1280px; margin:18px auto; padding:0 18px; display:grid; grid-template-columns: 320px 1fr; gap:18px;}
+@media (max-width: 980px){ .container{grid-template-columns:1fr} }
+aside{position:sticky; top:76px; align-self:start; background:var(--panel); border:1px solid var(--stroke); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow);}
+.section{margin-bottom:14px}
+.section h3{margin:0 0 8px; font-size:12px; font-weight:800; letter-spacing:.35px; color:var(--muted); text-transform:uppercase;}
+.control{display:flex; flex-direction:column; gap:8px}
+input[type="text"], select{width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--stroke); background:var(--panel-2); color:var(--text);}
+.filters{display:flex; flex-direction:column; gap:6px; max-height:230px; overflow:auto; padding-right:4px}
+.filter-item{display:flex; align-items:center; gap:8px}
+.filter-item input{accent-color:#5aa6ff}
+.small{color:var(--muted); font-size:12px}
+
+/* Botão/label elegante para arquivo */
+.file-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.file-btn{display:inline-flex; align-items:center; gap:8px; cursor:pointer}
+.file-btn input{display:none}
+#fileName{max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+/* Painéis */
+.panel{background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)), var(--panel); border:1px solid var(--stroke); border-radius:var(--radius); box-shadow:var(--shadow);}
+.totals{padding:12px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:flex-start;}
+.badge{display:inline-flex; align-items:center; gap:8px; border:1px solid var(--stroke); border-radius:999px; padding:8px 12px; background:var(--panel-2);}
+.badge .dot{display:inline-block; width:10px; height:10px; border-radius:50%}
+.dot.ok{background:var(--ok)}
+.dot.err{background:var(--danger)}
+.dot.warn{background:var(--warn)}
+.dot.inv{background:var(--accent)}
+.dot.other{background:var(--neutral)}
+.badge b{font-weight:800}
+.result-bar{display:flex; align-items:center; gap:10px; justify-content:space-between; padding:10px 12px; border-top:1px solid var(--stroke)}
+.count{color:var(--muted)}
+
+/* Cards */
+.cards{ padding:12px; display:grid; grid-template-columns:1fr; gap:12px}
+.card{border:1px solid var(--stroke); border-radius:12px; background:var(--panel-2); padding:12px; display:grid; gap:10px; transition:opacity .18s ease, border-color .18s ease;}
+.card.done{opacity:.55; border-color:#2a3342;}
+.card-head{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+.head-left{display:flex; align-items:center; gap:10px}
+.head-right{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+
+/* Código em pill */
+.code{
+  font-weight:900; letter-spacing:.4px; padding:6px 10px; border-radius:999px;
+  border:1px solid rgba(134,176,255,.28);
+  background:linear-gradient(180deg, rgba(134,176,255,.10), rgba(134,176,255,.04));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
+}
+
+/* Chips */
+.cls-chip{
+  font-weight:800; color:var(--text);
+  padding:6px 10px; border-radius:999px; border:1px solid var(--stroke);
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+}
+.cls-ok{ background: rgba(85,216,138,.12); border-color: rgba(85,216,138,.35); }
+.cls-err{ background: rgba(255,107,107,.12); border-color: rgba(255,107,107,.35); }
+.cls-warn{ background: rgba(247,201,72,.14); border-color: rgba(247,201,72,.38); }
+.cls-inv{ background: rgba(134,176,255,.14); border-color: rgba(134,176,255,.38); }
+.cls-other{ background: rgba(160,167,180,.12); border-color: rgba(160,167,180,.35); }
+
+/* Tag "Corrigido" */
+.corr-chip{
+  padding:4px 10px; font-weight:700; border-radius:999px;
+  border:1px solid rgba(85,216,138,.35); background:rgba(85,216,138,.12);
+  color:var(--text); letter-spacing:.2px;
+  min-width:110px;            /* reserva espaço fixo p/ não deslocar o select */
+  text-align:center;
+  opacity:0; visibility:hidden; transition:opacity .15s ease;
+}
+.corr-chip.is-on{
+  opacity:1; visibility:visible;
+}
+
+/* Checkbox estilizado */
+.checkbox{
+  appearance:none; width:18px; height:18px; border:1px solid var(--stroke); border-radius:6px;
+  background:var(--panel); display:inline-grid; place-content:center; cursor:pointer; transition:all .15s ease;
+}
+.checkbox:focus{ outline:2px solid rgba(67,98,255,.35); outline-offset:2px; }
+.checkbox::after{
+  content:""; width:12px; height:12px; transform:scale(0); border-radius:3px; background:#4362ff; transition: transform .12s ease;
+}
+.checkbox:checked{ border-color:#4362ff; background:linear-gradient(180deg, rgba(67,98,255,.25), rgba(67,98,255,.12)); box-shadow:0 6px 18px rgba(67,98,255,.25) inset; }
+.checkbox:checked::after{ transform:scale(1); }
+.inline-control{display:inline-flex; align-items:center; gap:8px; font-weight:700}
+
+/* Dropdown ao lado da TAG original */
+.cls-select{
+  background:var(--panel); border:1px solid var(--stroke); color:var(--text);
+  padding:8px 10px; border-radius:10px; font-weight:700; min-width:200px;
+}
+.small-label{color:var(--muted); font-weight:700}
+
+/* Blocos Pergunta/Resposta com título */
+.block{
+  border:1px solid var(--stroke); border-radius:12px; overflow:hidden; background:var(--panel-2);
+}
+.block-title{
+  padding:8px 12px; font-weight:900; letter-spacing:.3px;
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+  border-bottom:1px solid var(--stroke);
+}
+.block-body{ white-space:pre-wrap; padding:10px 12px; background:#0f141b; }
+
+/* Avaliação do Agente */
+.eval{border:1px dashed var(--stroke); border-radius:10px; background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02)); padding:10px;}
+.eval h4{margin:0 0 8px; font-size:13px; letter-spacing:.2px}
+.eval .kv{display:grid; grid-template-columns: 190px 1fr; gap:6px 10px}
+.eval .k{color:var(--muted); font-weight:700}
+.eval .v{white-space:pre-wrap}
+
+/* Gráfico (compacto, centralizado e recolhível) */
+.chart-wrap{padding:10px 12px; border-top:1px solid var(--stroke); display:none}
+.chart-wrap.visible{display:block}
+.chart-inner{
+  display:grid; grid-template-columns:auto 1fr; align-items:center; justify-content:center; gap:18px;
+}
+.chart-canvas{ display:flex; justify-content:center; align-items:center; }
+#pieChart{ width:320px !important; height:180px !important; }
+.legend-list{list-style:none; margin:0; padding:0;}
+.legend-item{display:flex; align-items:center; gap:8px; margin:4px 0; color:var(--muted)}
+.swatch{width:10px; height:10px; border-radius:50%}
+.chart-counts{margin-top:8px; color:var(--muted); font-size:12px}
+
+@media (max-width: 980px){
+  .chart-inner{ grid-template-columns: 1fr; }
+  .legend-list{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+}
+
+/* Divisor por grupo */
+.group-sep{ display:flex; align-items:center; gap:10px; margin:18px 12px 6px; }
+.group-sep .line{flex:1; height:1px; background:var(--stroke); border-radius:1px;}
+.group-sep .label{
+  padding:6px 10px; border-radius:999px; border:1px solid var(--stroke);
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  font-weight:800; color:var(--muted); letter-spacing:.3px;
+}
+
+/* Estados */
+.hidden{display:none !important}
+
+/* Modo foco / compacto */
+body.focus aside, body.focus #totalsPanel{display:none !important}
+body.focus .container{grid-template-columns:1fr}
+body.compact .cards{ gap:8px; padding:8px }
+body.compact .card{ padding:10px }
+body.compact .badge{ padding:6px 10px }
+
+/* ——— App Switcher ——— */
+.app-switcher { position: absolute; right: 16px; top: 16px; z-index: 1000; }
+.app-switcher__btn {
+  border: 1px solid var(--border, rgba(255,255,255,.15));
+  background: linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  color: var(--fg, #e5e7eb);
+  padding: 8px 12px; border-radius: 12px; font-weight: 700; letter-spacing: .2px;
+  cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.25); backdrop-filter: blur(6px);
+}
+.app-switcher__btn:hover { transform: translateY(-1px); }
+.app-switcher__menu {
+  position: absolute; right: 0; margin-top: 8px; min-width: 260px; padding: 8px; border-radius: 14px;
+  border: 1px solid var(--border, rgba(255,255,255,.12));
+  background: linear-gradient(180deg, rgba(15,23,42,.98), rgba(15,23,42,.95));
+  box-shadow: 0 20px 40px rgba(0,0,0,.35);
+  display: none;
+}
+.app-switcher.open .app-switcher__menu { display: block; }
+.app-switcher__item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 10px; border-radius: 10px; text-decoration: none;
+  color: var(--fg, #e5e7eb); border: 1px solid transparent;
+}
+.app-switcher__item small { color: var(--muted, #9aa4b2); display:block; margin-top:2px }
+.app-switcher__item:hover { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.08); }
+header { position: relative; }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <h1>Workspace</h1>
+    <nav class="app-switcher" aria-label="Outros aplicativos">
+      <button id="appSwitcherBtn" class="app-switcher__btn" type="button">HDSP CORP. ▾</button>
+      <div id="appSwitcherMenu" class="app-switcher__menu" role="menu">
+        <a class="app-switcher__item" role="menuitem" href="LINK_DO_ANALISADOR" target="_blank" rel="noopener">
+          <div><strong>Analisador</strong><small>Importa JSON e envia os grupos para avaliação</small></div>
+        </a>
+        <a class="app-switcher__item" role="menuitem" href="LINK_DO_CONVERSOR" target="_blank" rel="noopener">
+          <div><strong>Conversor</strong><small>Converte arquivos em TXT, ou gera packs</small></div>
+        </a>
+      </div>
+    </nav>
+    <div class="header-actions">
+      <button id="focusBtn" class="btn" title="Oculta filtros e totais para focar na leitura">Modo Foco</button>
+      <button id="compactBtn" class="btn" title="Reduz espaços para sessões longas">Modo Compacto</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <aside>
+    <div class="section">
+      <h3>Arquivo</h3>
+      <div class="control file-row">
+        <label class="btn file-btn" for="fileInput">Escolher arquivo
+          <input type="file" id="fileInput" accept=".json">
+        </label>
+        <span id="fileName" class="small">Nenhum arquivo selecionado</span>
+        <span class="small" style="flex-basis:100%"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Busca</h3>
+      <input type="text" id="searchBox" placeholder="Pesquisar...">
+    </div>
+
+    <div class="section">
+      <h3>Modo dos filtros</h3>
+      <div class="control">
+        <label class="filter-item">
+          <input type="radio" name="filterMode" value="items" checked>
+          Mostrar apenas as interações que atendem aos filtros
+        </label>
+        <label class="filter-item">
+          <input type="radio" name="filterMode" value="groups">
+          Mostrar grupos das interações que atendem aos filtros
+        </label>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Classificações</h3>
+      <div id="filters" class="filters"></div>
+      <div class="small"></div>
+    </div>
+
+    <div class="section">
+      <h3>Relatórios</h3>
+      <div class="control">
+        <button id="exportCodes" class="btn">Exportar — Códigos</button>
+        <button id="exportFull"  class="btn">Exportar — Completo</button>
+        <button id="btnChart"   class="btn primary">Exibir gráfico de assertividade</button>
+        <span class="small"></span>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <section id="totalsPanel" class="panel">
+      <div class="totals" id="totals"></div>
+      <div class="result-bar">
+        <div class="count" id="resultCount">0 itens</div>
+        <div class="small"></div>
+      </div>
+
+      <div class="chart-wrap" id="chartWrap">
+        <div class="chart-inner">
+          <div class="chart-canvas">
+            <canvas id="pieChart" aria-label="Gráfico de assertividade"></canvas>
+          </div>
+          <ul class="legend-list" id="chartLegendList"></ul>
+        </div>
+        <div class="chart-counts" id="chartCounts"></div>
+      </div>
+    </section>
+
+    <section id="resultsPanel" class="panel" style="margin-top:12px;">
+      <div class="cards" id="cards"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ===================== Estado ===================== */
+let RAW = null;
+let DATA = [];   // [{grupo, codigo, pergunta, resposta, classificacao, classificacaoEmoji, avaliacao:{...}}]
+let FILTERS = new Set();
+let ALL_CLASSES = [];
+let SEARCH = "";
+let CURRENT_FILE_NAME = "";
+let pieChart = null;
+let FILTER_MODE = 'items'; // 'items' | 'groups'
+
+/* ===================== Utilidades ===================== */
+const $  = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+function download(filename, text){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain;charset=utf-8'}));
+  a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+}
+function stripEmoji(str){ return (str||"").replace(/[\p{Emoji_Presentation}\p{Emoji}\uFE0F]/gu, '').trim(); }
+function denoise(s){ return (s||"").normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+/* NORMALIZAÇÃO de classificação (mantém compat com históricos) */
+function normalizeClassName(s){
+  const raw   = (s||'').trim();
+  const lower = denoise(stripEmoji(raw)).toLowerCase();
+
+  if (raw.includes('✅')) return 'Correta';
+  if (raw.includes('❌') || raw.includes('✖') || /\b[xX]\b/.test(raw)) return 'Incorreta';
+  if (raw.includes('⚠️') || raw.includes('⚠')) return 'Falta de Documentação';
+  if (raw.includes('🔎')) return 'Pergunta investigativa';
+
+  if (/\bcorret[ao]?\b/.test(lower)) return 'Correta';
+  if (/\bincorret[ao]?\b|\berrad[oa]\b|\bnao atende\b|\bnão atende\b|\binadequad[oa]\b|\bimprocedent[ea]\b|\bincabivel\b|\bincabível\b/.test(lower)) return 'Incorreta';
+  if (lower.includes('falta') && (lower.includes('document') || lower.includes('doc'))) return 'Falta de Documentação';
+  if (/\binvestigativ[ao]?\b/.test(lower)) return 'Pergunta investigativa';
+
+  return 'Sem classificação';
+}
+function withEmoji(cls){
+  switch(cls){
+    case 'Correta': return '✅ Correta';
+    case 'Incorreta': return '❌ Incorreta';
+    case 'Falta de Documentação': return '⚠️ Falta de Documentação';
+    case 'Pergunta investigativa': return '🔎 Pergunta investigativa';
+    case 'Sem classificação': return '⭕ Sem classificação';
+    default: return cls;
+  }
+}
+function colorDotFor(cls){
+  if (cls==='Correta') return 'ok';
+  if (cls==='Incorreta') return 'err';
+  if (cls==='Falta de Documentação') return 'warn';
+  if (cls==='Pergunta investigativa') return 'inv';
+  return 'other';
+}
+function chipClassFor(cls){
+  if (cls==='Correta') return 'cls-ok';
+  if (cls==='Incorreta') return 'cls-err';
+  if (cls==='Falta de Documentação') return 'cls-warn';
+  if (cls==='Pergunta investigativa') return 'cls-inv';
+  return 'cls-other';
+}
+function classColor(cls){
+  if (cls==='✅ Correta' || cls==='Correta') return '#55d88a';
+  if (cls==='❌ Incorreta' || cls==='Incorreta') return '#ff6b6b';
+  if (cls==='⚠️ Falta de Documentação' || cls==='Falta de Documentação') return '#f7c948';
+  if (cls==='🔎 Pergunta investigativa' || cls==='Pergunta investigativa') return '#86b0ff';
+  return '#a0a7b4';
+}
+
+/* Ordenação por código */
+function codeParts(code){
+  const m = (code||'').match(/^([A-Z]{2})(\d{2})-(\d{2})$/);
+  if (!m) return {g: 9999, i: 9999};
+  return { g: parseInt(m[2],10), i: parseInt(m[3],10) };
+}
+function groupLabelFromCode(code){ const {g} = codeParts(code); return 'GR'+String(g).padStart(2,'0'); }
+function compareByGroup(a,b){
+  const A = codeParts(a.codigo), B = codeParts(b.codigo);
+  if (A.g !== B.g) return A.g - B.g;
+  return A.i - B.i;
+}
+
+/* ===================== Parser ===================== */
+/* … (idêntico ao anterior; suporta [INICIO_INTERACAO]/[FIM_INTERACAO] e legado) */
+function splitByTagBlocks(text){
+  const lines = (text || '').replace(/\r/g,'').split('\n');
+  const blocks = []; let cur = null;
+  for (let i=0;i<lines.length;i++){
+    const raw = lines[i]; const line = raw.trim();
+    if (/^\[INICIO_INTERACAO\]\s*$/i.test(line)){ if (cur){ blocks.push(cur); } cur = { code:'', text:'' }; continue; }
+    if (/^\[FIM_INTERACAO\]\s*$/i.test(line)){ if (cur){ blocks.push(cur); cur = null; } continue; }
+    if (cur){
+      cur.text += raw + '\n';
+      const m = line.match(/^(?:\[[^\]]+\]\s*)?Intera[çc][aã]o:\s*([A-Z]{2}\d{2}-\d{2})/i);
+      if (m) cur.code = m[1].trim();
+    }
+  }
+  if (cur){ blocks.push(cur); }
+  return blocks.filter(b => b.text.trim().length > 0);
+}
+function splitByLegacyBlocks(text){
+  const lines = (text || '').replace(/\r/g,'').split('\n');
+  const blocks = []; let cur = null;
+  for (let i=0;i<lines.length;i++){
+    const raw = lines[i]; const line = raw.trim();
+    const m = line.match(/^(?:\[[^\]]+\]\s*)?Intera[çc][aã]o:\s*([A-Z]{2}\d{2}-\d{2})/i);
+    if (m){ if (cur) blocks.push(cur); cur = { code:m[1].trim(), text:'' }; continue; }
+    if (cur){ cur.text += raw + '\n'; }
+  }
+  if (cur) blocks.push(cur);
+  return blocks;
+}
+function splitAssistantBlocks(text){
+  const byTags = splitByTagBlocks(text);
+  if (byTags.length) return byTags;
+  return splitByLegacyBlocks(text);
+}
+function matchField(text, re){
+  const flags = re.flags?.replace?.('g','') || '';
+  const rex = new RegExp('(?:\\[[^\\]]+\\]\\s*)?' + re.source, flags);
+  const m = text.match(rex);
+  return m ? (m[1] || '').trim() : '';
+}
+function matchBlock(text, startRe){
+  const flags = startRe.flags?.replace?.('g','') || '';
+  const start = new RegExp('(?:\\[[^\\]]+\\]\\s*)?' + startRe.source, flags);
+  const idx = text.search(start);
+  if (idx === -1) return '';
+  const after = text.slice(idx).replace(start,'');
+  const end = new RegExp(
+    '\\n(?:\\s*(?:\\[[^\\]]+\\]\\s*)?(?:' +
+      'Classifica[çc][aã]o:|' +
+      'Justificativa\\s*\\(curta\\)\\s*:|' +
+      'Documentos\\s+utilizados\\s*:|' +
+      'Evid[eê]ncias\\s*\\(contagem\\)\\s*:|' +
+      'Sugest[aã]o\\s+de\\s+melhoria\\s*:|' +
+      'Pergunta\\s*:|' +
+      'Resposta\\s*Kiara\\s*:|' +
+      'Intera[çc][aã]o:' +
+    ')|\\s*\\[FIM_INTERACAO\\]\\s*$)',
+    'i'
+  );
+  const m = after.search(end);
+  return (m === -1 ? after : after.slice(0, m)).trim();
+}
+function parseJson(json){
+  const out = [];
+  const convs = (json.conversations || [json]).filter(Boolean);
+
+  for (const conv of convs){
+    const messages = conv.messages || [];
+    const userMsg = [...messages].reverse().find(m => (m.role||'').toLowerCase()==='user');
+    let interacoes = [];
+    let grupoPadrao = '';
+
+    if (userMsg){
+      const txt = userMsg.content || '';
+      if (txt.trim().startsWith('{')){
+        try{
+          const obj = JSON.parse(txt);
+          grupoPadrao = obj.grupo || '';
+          if (Array.isArray(obj.interacoes)) interacoes = obj.interacoes.map(it=>({
+            grupo: obj.grupo || '', codigo: it.codigo || '', pergunta: it.pergunta || '', resposta: it.resposta || ''
+          }));
+        }catch{}
+      }
+    }
+
+    const evalByCode = new Map();
+    const detailsByCode = new Map();
+
+    for (const msg of messages){
+      if ((msg.role||'').toLowerCase() !== 'assistant') continue;
+      const text = (msg.content || '').replace(/\r/g,'');
+      const blocks = splitAssistantBlocks(text);
+
+      for (const {code, text:body} of blocks){
+        let codeFinal = code;
+        if (!codeFinal){
+          const mCode = body.match(/^(?:\[[^\]]+\]\s*)?Intera[çc][aã]o:\s*([A-Z]{2}\d{2}-\d{2})/im);
+          if (mCode) codeFinal = mCode[1].trim();
+        }
+        if (!codeFinal) continue;
+
+        const clsLine = matchField(body, /Classifica[çc][aã]o:\s*([^\n]+)/i);
+        const clsNorm = normalizeClassName(clsLine);
+        const justificativa = matchBlock(body, /Justificativa\s*\(curta\)\s*:\s*/i);
+        const docs = matchBlock(body, /Documentos\s+utilizados\s*:\s*/i);
+        const sugestao = matchBlock(body, /Sugest[aã]o\s+de\s+melhoria\s*:\s*/i);
+        evalByCode.set(codeFinal, {
+          classificacao: clsNorm,
+          classificacaoEmoji: clsLine && clsLine.trim(),
+          justificativa: justificativa||'',
+          docs: docs||'',
+          sugestao: sugestao||''
+        });
+
+        const perguntaTxt = matchBlock(body, /Pergunta\s*:\s*/i);
+        const respostaTxt = matchBlock(body, /Resposta\s*Kiara\s*:\s*/i);
+        if (perguntaTxt || respostaTxt){
+          detailsByCode.set(codeFinal, {
+            pergunta: (perguntaTxt||'').trim(),
+            resposta: (respostaTxt||'').trim()
+          });
+        }
+      }
+    }
+
+    if (!interacoes.length && detailsByCode.size){
+      interacoes = Array.from(detailsByCode.keys()).map(code=>{
+        const det = detailsByCode.get(code)||{};
+        return { grupo: groupLabelFromCode(code), codigo: code, pergunta: det.pergunta||'', resposta: det.resposta||'' };
+      });
+    }
+
+    for (const it of interacoes){
+      const ev = evalByCode.get(it.codigo) || {classificacao:'Sem classificação', classificacaoEmoji:'⭕ Sem classificação'};
+      out.push({
+        grupo: it.grupo || grupoPadrao || conv.id || '',
+        codigo: it.codigo,
+        pergunta: it.pergunta,
+        resposta: it.resposta,
+        classificacao: ev.classificacao,
+        classificacaoEmoji: ev.classificacaoEmoji || withEmoji(ev.classificacao),
+        avaliacao: ev
+      });
+    }
+  }
+
+  const byCode = new Map();
+  for (const row of out){ byCode.set(row.codigo, {...(byCode.get(row.codigo)||{}), ...row}); }
+  return Array.from(byCode.values()).sort(compareByGroup);
+}
+
+/* ===================== Renderização ===================== */
+function buildFilters(){
+  const box = $('#filters'); box.innerHTML='';
+  const list = ALL_CLASSES;
+  for (const cls of list){
+    const id = 'f_'+cls.replace(/\s+/g,'_');
+    const row = document.createElement('label');
+    row.className='filter-item';
+    row.innerHTML = `<input type="checkbox" id="${id}"><span>${withEmoji(cls)}</span>`;
+    box.appendChild(row);
+    row.querySelector('input').addEventListener('change', (e)=>{
+      if (e.target.checked) FILTERS.add(cls); else FILTERS.delete(cls);
+      render();
+    });
+  }
+}
+
+/* Dropdown: só 3 opções; se a atual não está nas opções, mostra “— manter —” */
+function classificationOptionsHTML(selected){
+  const allowed = [
+    {v:'Correta', t:'✅ Correta'},
+    {v:'Incorreta', t:'❌ Incorreta'},
+    {v:'Falta de Documentação', t:'⚠️ Falta de Documentação'}
+  ];
+  const isAllowed = allowed.some(a => a.v === selected);
+  const head = isAllowed ? '' : `<option value="" selected disabled>— manter —</option>`;
+  return head + allowed.map(o=>`<option value="${o.v}" ${o.v===selected?'selected':''}>${o.t}</option>`).join('');
+}
+
+function render(){
+  const cards = $('#cards'); const totals = $('#totals'); const resultCount = $('#resultCount');
+  cards.innerHTML = ''; totals.innerHTML = '';
+
+  const textQ = (SEARCH || '').trim().toLowerCase();
+  const hasQ  = textQ.length > 0;
+  const passText = (it) => {
+    if (!hasQ) return true;
+    return (
+      (it.pergunta || '').toLowerCase().includes(textQ) ||
+      (it.resposta || '').toLowerCase().includes(textQ) ||
+      (it.codigo   || '').toLowerCase().includes(textQ)
+    );
+  };
+  const passClass = (it) => (FILTERS.size === 0 || FILTERS.has(it.classificacao));
+  const matchItem = (it) => passClass(it) && passText(it);
+
+  let filtered = [];
+  if (FILTER_MODE === 'items') {
+    filtered = DATA.filter(matchItem).sort(compareByGroup);
+  } else {
+    const matchedGroups = new Set(
+      DATA.filter(matchItem).map(it => groupLabelFromCode(it.codigo))
+    );
+    filtered = DATA
+      .filter(it => matchedGroups.has(groupLabelFromCode(it.codigo)) && passText(it))
+      .sort(compareByGroup);
+  }
+
+  // Totais (sobre o conjunto total)
+  const countBy = {};
+  for (const r of DATA){ countBy[r.classificacao] = (countBy[r.classificacao]||0)+1; }
+  const total = DATA.length || 1;
+  const order = ['Correta','Incorreta','Falta de Documentação','Pergunta investigativa','Sem classificação'];
+  const classesOrdenadas = [...Object.keys(countBy)].sort((a,b)=>{
+    const ia=order.indexOf(a), ib=order.indexOf(b);
+    return (ia===-1?99:ia)-(ib===-1?99:ib)||a.localeCompare(b);
+  });
+  for (const cls of classesOrdenadas){
+    const count = countBy[cls], pct = Math.round(count*100/total), dot = colorDotFor(cls);
+    const el = document.createElement('div');
+    el.className='badge';
+    el.innerHTML = `<span class="dot ${dot}"></span><span>${withEmoji(cls)}</span><b>${count}</b><span class="small">(${pct}%)</span>`;
+    totals.appendChild(el);
+  }
+
+  resultCount.textContent = `${filtered.length} itens`;
+
+  // Cards + divisores por grupo
+  let lastGroup = null;
+  for (const r of filtered){
+    const gLabel = groupLabelFromCode(r.codigo);
+    if (gLabel !== lastGroup){
+      const sep = document.createElement('div');
+      sep.className = 'group-sep';
+      sep.innerHTML = `<div class="line"></div><div class="label">Grupo ${gLabel}</div><div class="line"></div>`;
+      cards.appendChild(sep);
+      lastGroup = gLabel;
+    }
+
+    const done = getDone(r.codigo);
+    const chipCls = chipClassFor(r.classificacao);
+
+    const card = document.createElement('div');
+    card.className='card' + (done ? ' done' : '');
+
+const evalBox = buildEvalBox(r.avaliacao);
+card.innerHTML = `
+  <div class="card-head">
+    <div class="head-left">
+      <span class="code">${r.codigo}</span>
+      <label class="inline-control" title="Marcar como corrigido">
+        <input type="checkbox" class="checkbox mark-done" data-code="${r.codigo}" ${done?'checked':''}>
+        <span>Corrigido</span>
+      </label>
+    </div>
+    <div class="head-right">
+      <label class="inline-control" title="Alterar classificação">
+        <span class="small-label">Classificação</span>
+        <select id="sel-${r.codigo}" class="cls-select" data-code="${r.codigo}">
+          ${classificationOptionsHTML(r.classificacao)}
+        </select>
+      </label>
+
+      <div class="cls-chip ${chipCls}">${r.classificacaoEmoji || withEmoji(r.classificacao)}</div>
+      <!-- Chip sempre presente; só alternamos .is-on -->
+      <div class="corr-chip ${done ? 'is-on' : ''}" data-code="${r.codigo}">Corrigido</div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-title">Pergunta</div>
+    <div class="block-body">${escapeHtml(r.pergunta)}</div>
+  </div>
+
+  <div class="block">
+    <div class="block-title">Resposta</div>
+    <div class="block-body">${escapeHtml(r.resposta)}</div>
+  </div>
+`;
+
+    card.appendChild(evalBox);
+    cards.appendChild(card);
+  }
+
+  if ($('#chartWrap').classList.contains('visible')){
+    ensurePie(getFiltered());
+  }
+}
+
+/* Caixa de avaliação */
+function buildEvalBox(ev){
+  const wrap = document.createElement('div');
+  wrap.className='eval';
+  const clsTxt = ev?.classificacaoEmoji || withEmoji(ev?.classificacao||'Sem classificação');
+  const just = (ev?.justificativa||'').replace(/\n{3,}/g,'\n\n');
+  const docs = (ev?.docs||'').replace(/\n{3,}/g,'\n\n');
+  const sug  = (ev?.sugestao||'').replace(/\n{3,}/g,'\n\n');
+
+  wrap.innerHTML = `
+    <h4>Avaliação do Agente de Curadoria</h4>
+    <div class="kv">
+      <div class="k">Classificação</div><div class="v">${escapeHtml(clsTxt)}</div>
+      <div class="k">Justificativa (curta)</div><div class="v">${escapeHtml(just)}</div>
+      <div class="k">Documentos utilizados</div><div class="v">${escapeHtml(docs)}</div>
+      <div class="k">Sugestão de melhoria</div><div class="v">${escapeHtml(sug)}</div>
+    </div>
+  `;
+  return wrap;
+}
+
+/* ===================== Exportações ===================== */
+function getFiltered(){
+  const textQ = (SEARCH || '').trim().toLowerCase();
+  const hasQ  = textQ.length > 0;
+  const passText = (it) => {
+    if (!hasQ) return true;
+    return (
+      (it.pergunta || '').toLowerCase().includes(textQ) ||
+      (it.resposta || '').toLowerCase().includes(textQ) ||
+      (it.codigo   || '').toLowerCase().includes(textQ)
+    );
+  };
+  const passClass = (it) => (FILTERS.size === 0 || FILTERS.has(it.classificacao));
+  const matchItem = (it) => passClass(it) && passText(it);
+
+  if (FILTER_MODE === 'items') {
+    return DATA.filter(matchItem).sort(compareByGroup);
+  } else {
+    const matchedGroups = new Set(
+      DATA.filter(matchItem).map(it => groupLabelFromCode(it.codigo))
+    );
+    return DATA
+      .filter(it => matchedGroups.has(groupLabelFromCode(it.codigo)) && passText(it))
+      .sort(compareByGroup);
+  }
+}
+function exportCodes(rows){
+  const lines = ['codigo'];
+  rows.forEach(r=> lines.push(r.codigo));
+  download(`codigos_filtrados.csv`, lines.join('\n'));
+}
+function exportFull(rows){
+  const csv = [ ['grupo','codigo','classificacao','pergunta','resposta','justificativa_curta','documentos_utilizados','sugestao_melhoria'].join(';') ];
+  rows.forEach(r=>{
+    const row = [
+      r.grupo||'',
+      r.codigo||'',
+      r.classificacao||'',
+      (r.pergunta||'').replace(/\s+/g,' ').trim(),
+      (r.resposta||'').replace(/\s+/g,' ').trim(),
+      (r.avaliacao?.justificativa||'').replace(/\s+/g,' ').trim(),
+      (r.avaliacao?.docs||'').replace(/\s+/g,' ').trim(),
+      (r.avaliacao?.sugestao||'').replace(/\s+/g,' ').trim(),
+    ];
+    csv.push(row.map(v=>`"${v.replace(/"/g,'""')}"`).join(';'));
+  });
+  download(`relatorio_completo.csv`, csv.join('\n'));
+}
+
+/* ===================== Gráfico (toggle) ===================== */
+function computeStats(rows){
+  const map = new Map();
+  rows.forEach(r=>{ const k = r.classificacao; map.set(k, (map.get(k)||0)+1); });
+  const order = ['Correta','Incorreta','Falta de Documentação','Pergunta investigativa','Sem classificação'];
+  const labels = [], values = [];
+  order.forEach(k=>{ if (map.has(k)){ labels.push(withEmoji(k)); values.push(map.get(k)); } });
+  return { labels, values, total: values.reduce((a,b)=>a+b,0) };
+}
+function buildLegendHTML(labels){
+  const list = $('#chartLegendList'); list.innerHTML = '';
+  labels.forEach(l=>{
+    const li = document.createElement('li');
+    li.className = 'legend-item';
+    li.innerHTML = `<span class="swatch" style="background:${classColor(l)}"></span><span>${l}</span>`;
+    list.appendChild(li);
+  });
+}
+function ensurePie(rows){
+  const wrap = $('#chartWrap'); wrap.classList.add('visible');
+  const ctx = $('#pieChart').getContext('2d');
+  const {labels, values, total} = computeStats(rows);
+
+  if (pieChart){ pieChart.destroy(); }
+  buildLegendHTML(labels);
+  const bgColors = labels.map(l => classColor(l));
+
+  pieChart = new Chart(ctx, {
+    type: 'pie',
+    data: { labels, datasets: [{ data: values, backgroundColor: bgColors, borderWidth: 0 } ] },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display:false }, tooltip: { enabled: true } }
+    }
+  });
+
+  const counts = labels.map((l,i)=> `${l}: ${values[i]} (${Math.round(values[i]*100/(total||1))}%)`).join('  •  ');
+  $('#chartCounts').textContent = counts;
+}
+function toggleChart(){
+  const wrap = $('#chartWrap');
+  const showing = !wrap.classList.contains('visible');
+  if (showing){
+    ensurePie(getFiltered());
+    $('#btnChart').textContent = 'Ocultar gráfico de assertividade';
+  }else{
+    wrap.classList.remove('visible');
+    if (pieChart){ pieChart.destroy(); pieChart = null; }
+    $('#btnChart').textContent = 'Exibir gráfico de assertividade';
+  }
+}
+
+/* ===================== Eventos UI ===================== */
+document.getElementById('cards').addEventListener('change', (e)=>{
+  if (e.target.classList.contains('mark-done')){
+    const code = e.target.getAttribute('data-code');
+    const checked = e.target.checked;
+
+    setDone(code, checked);
+
+    const card = e.target.closest('.card');
+    card?.classList.toggle('done', checked);
+
+    const corr = card.querySelector('.corr-chip');
+corr?.classList.toggle('is-on', checked);
+
+    return;
+  }
+
+  if (e.target.classList.contains('cls-select')){
+    const code = e.target.getAttribute('data-code');
+    const val  = e.target.value;
+    const row = DATA.find(d=>d.codigo===code);
+    if (row){
+      row.classificacao = val;
+      row.classificacaoEmoji = withEmoji(val);
+    }
+    render();
+    return;
+  }
+});
+
+$$('input[name="filterMode"]').forEach(r=>{
+  r.addEventListener('change', (e)=>{
+    FILTER_MODE = e.target.value;
+    render();
+  });
+});
+
+$('#fileInput').addEventListener('change', async (ev)=>{
+  const f = ev.target.files?.[0]; if (!f) return;
+  CURRENT_FILE_NAME = f.name || '';
+  $('#fileName').textContent = CURRENT_FILE_NAME;
+  const raw = await f.text();
+  try{ RAW = JSON.parse(raw); }catch{ alert('JSON inválido.'); return; }
+
+  DATA = parseJson(RAW);
+  if (!DATA.length){ alert('Nada encontrado. Verifique o formato (grupo/interacoes OU blocos do ASSISTANT com Interação/Pergunta/Resposta).'); return; }
+
+  ALL_CLASSES = Array.from(new Set(DATA.map(d=>d.classificacao))).sort((a,b)=>{
+    const prio = ['Correta','Incorreta','Falta de Documentação','Pergunta investigativa','Sem classificação'];
+    const ia = prio.indexOf(a), ib = prio.indexOf(b);
+    return (ia===-1?99:ia) - (ib===-1?99:ib) || a.localeCompare(b);
+  });
+  FILTERS.clear();
+  buildFilters();
+  render();
+
+  const wrap = $('#chartWrap'); wrap.classList.remove('visible');
+  if (pieChart){ pieChart.destroy(); pieChart = null; }
+  $('#btnChart').textContent = 'Exibir gráfico de assertividade';
+});
+
+$('#searchBox').addEventListener('input', e=>{ SEARCH = e.target.value||''; render(); });
+$('#exportCodes').addEventListener('click', ()=>{ const rows = getFiltered(); if (!rows.length) return alert('Nada para exportar.'); exportCodes(rows); });
+$('#exportFull') .addEventListener('click', ()=>{ const rows = getFiltered(); if (!rows.length) return alert('Nada para exportar.'); exportFull(rows); });
+$('#btnChart')   .addEventListener('click', toggleChart);
+
+/* Modo foco / compacto */
+$('#focusBtn').addEventListener('click', ()=>{
+  const on = document.body.classList.toggle('focus');
+  $('#focusBtn').textContent = on ? 'Sair do foco' : 'Modo Foco';
+});
+$('#compactBtn').addEventListener('click', ()=>{
+  const on = document.body.classList.toggle('compact');
+  $('#compactBtn').textContent = on ? 'Sair do compacto' : 'Modo Compacto';
+});
+
+/* ===================== Persistência de marcação ===================== */
+function safeFileKey(){
+  // Usa o nome do arquivo atual; se não houver, cai em "GLOBAL"
+  const n = (CURRENT_FILE_NAME || 'GLOBAL').toLowerCase();
+  return n.replace(/[^a-z0-9]+/g,'-'); // normaliza
+}
+function getDoneKey(code){
+  // Agora a chave inclui o arquivo para isolar marcações por JSON
+  return 'poscuradoria_done_' + safeFileKey() + '_' + code;
+}
+function getDone(code){
+  try{ return localStorage.getItem(getDoneKey(code)) === '1'; }catch(e){ return false; }
+}
+function setDone(code, on){
+  try{ localStorage.setItem(getDoneKey(code), on ? '1' : '0'); }catch(e){}
+}
+</script>
+
+<script>
+/* App switcher */
+(function(){
+  const wrap  = document.querySelector('.app-switcher');
+  const btn   = document.getElementById('appSwitcherBtn');
+  const menu  = document.getElementById('appSwitcherMenu');
+  if (!wrap || !btn || !menu) return;
+  function toggle(open){ wrap.classList.toggle('open', open ?? !wrap.classList.contains('open')); }
+  btn.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(); });
+  document.addEventListener('click', (e)=>{ if (!wrap.contains(e.target)) toggle(false); });
+  document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') toggle(false); });
+})();
+</script>
+</body>
+</html>
