@@ -395,7 +395,7 @@ function classColor(cls){
 
 /* Ordenação por código */
 function codeParts(code){
-  const m = (code||'').match(/^([A-Z]{2})(\d{2})-(\d{2})$/);
+  const m = (code||'').match(/^([A-Z]{2})(\d+)-(\d+)$/);
   if (!m) return {g: 9999, i: 9999};
   return { g: parseInt(m[2],10), i: parseInt(m[3],10) };
 }
@@ -417,8 +417,8 @@ function splitByTagBlocks(text){
     if (/^\[FIM_INTERACAO\]\s*$/i.test(line)){ if (cur){ blocks.push(cur); cur = null; } continue; }
     if (cur){
       cur.text += raw + '\n';
-      const m = line.match(/^(?:\[[^\]]+\]\s*)?Intera[çc][aã]o:\s*([A-Z]{2}\d{2}-\d{2})/i);
-      if (m) cur.code = m[1].trim();
+      const m = line.match(/^(?:\[[^\]]+\]\s*)?Intera[çc][aã]o:\s*([A-Z]{2}\d+-\d+)/i);
+if (m) cur.code = m[1].trim();
     }
   }
   if (cur){ blocks.push(cur); }
@@ -429,8 +429,8 @@ function splitByLegacyBlocks(text){
   const blocks = []; let cur = null;
   for (let i=0;i<lines.length;i++){
     const raw = lines[i]; const line = raw.trim();
-    const m = line.match(/^(?:\[[^\]]+\]\s*)?Intera[çc][aã]o:\s*([A-Z]{2}\d{2}-\d{2})/i);
-    if (m){ if (cur) blocks.push(cur); cur = { code:m[1].trim(), text:'' }; continue; }
+    const m = line.match(/^(?:\[[^\]]+\]\s*)?Intera[çc][aã]o:\s*([A-Z]{2}\d+-\d+)/i);
+if (m){ if (cur) blocks.push(cur); cur = { code:m[1].trim(), text:'' }; continue; }
     if (cur){ cur.text += raw + '\n'; }
   }
   if (cur) blocks.push(cur);
